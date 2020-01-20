@@ -120,7 +120,7 @@ int main()
         }
 
         uint8_t data[4];
-        int css_stat = tsl2561_read_data(css, data);
+        int css_stat = tsl2561_read_word_data(css, data);
         for (int ii = 0; ii < 2; ii++)
         {
             printf("CSS CHN [%d]: DATA = [%04X]\n", ii, *((uint16_t *)&data[2 * ii]));
