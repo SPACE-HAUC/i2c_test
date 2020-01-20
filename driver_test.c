@@ -150,7 +150,7 @@ int main()
 
     while (!done)
     {
-        adc_stat = ads1115_read_data(adc, adc_conv_reg_data);
+        adc_stat = ads1115_read_cont(adc, adc_conv_reg_data);
 
         // 4B) [PRINT] data from conversion register
         if (adc_stat)
