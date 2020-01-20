@@ -140,7 +140,7 @@ int main()
         int css_stat = tsl2561_read_i2c_data(css, data);
         for (int ii = 0; ii < 2; ii++)
         {
-            printf("CSS CHN [%d]: DATA = [%04X]\n", ii, *((uint16_t *)&data[2 * ii]));
+            printf("CSS CHN [%d]: DATA = [%04X]\n", ii, ((uint16_t *)data)[ii]);
         }
         usleep(250000);
     }
