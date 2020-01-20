@@ -103,17 +103,17 @@ int main()
     /******************************************************************************/
     printf("\n*************************TSL2561*************************\n");
 
-    css_stat = tsl2561_read_config(css, &css_config_reg_data);
+    // css_stat = tsl2561_read_config(css, &css_config_reg_data);
 
-    if (css_stat)
-    {
-        printf("TSL2561 TIMING REGISTER - ORIGINAL CONTENTS\n");
-        printf("RAW CONTENTS: [%02X]\n", css_config_reg_data);
-    }
-    else
-    {
-        perror("[ERROR] Could not read from timing register.");
-    }
+    // if (css_stat)
+    // {
+    //     printf("TSL2561 TIMING REGISTER - ORIGINAL CONTENTS\n");
+    //     printf("RAW CONTENTS: [%02X]\n", css_config_reg_data);
+    // }
+    // else
+    // {
+    //     perror("[ERROR] Could not read from timing register.");
+    // }
 
     css_stat = tsl2561_configure(css);
     char c;
