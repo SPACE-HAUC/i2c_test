@@ -144,7 +144,7 @@ int main()
         }
         usleep(250000);
     }
-
+    printf("Freeing...\n") ;
     ads1115_destroy(adc);
     tsl2561_destroy(css);
     return 0;
