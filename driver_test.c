@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <time.h>
 #include <signal.h>
+#include <math.h>
+#include <papi.h>
 
 #include "../ads1115/ads1115.h"
 #include "../TSL2561/tsl2561.h"
@@ -148,18 +150,39 @@ int main()
         scanf("%c", &c);
     } while (c != '\n');
 
-    while (!done)
+    int retval ;
+    retval = PAPI_library_init(PAPI_VER_CURRENT);
+    if ( retval != PAPI_VER_CURRENT )
     {
-        adc_stat = ads1115_read_cont(adc, adc_conv_reg_data);
+        printf("PAPI error");
+        exit(0);
+    }
+    double avg = 0 , avg2 = 0 ;
+    long long count = 1 ;
 
+    while (!done)
+    {   
+        short magData[3];
+
+        long long s = PAPI_get_real_usec() ;
+        adc_stat = ads1115_read_cont(adc, adc_conv_reg_data);
+        int lux0 = tsl2561_get_lux(css);
+        int lux1 = tsl2561_get_lux(css1);
+        lsm9ds1_read_mag(mag, magData);
+        long long e = PAPI_get_real_usec() ;
+        avg = count * avg + ( e - s ) ;
+        avg2 = count * avg2 + ( e - s ) * ( e - s ) ;
+        count++ ;
+        avg /= count ;
+        avg2 /= count ;
         // 4B) [PRINT] data from conversion register
-        if (adc_stat)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                printf("ADC CHN [%d]: DATA = [%04X]\n", i, adc_conv_reg_data[i]);
-            }
-        }
+        // if (adc_stat)
+        // {
+        //     for (int i = 0; i < 4; i++)
+        //     {
+        //         printf("ADC CHN [%d]: DATA = [%04X]\n", i, adc_conv_reg_data[i]);
+        //     }
+        // }
 
         // uint8_t data[4];
         // int css_stat = tsl2561_read_i2c_data(css, data);
@@ -167,11 +190,10 @@ int main()
         // {
         //     printf("CSS CHN [%d]: DATA = [%04X]\n", ii, ((uint16_t *)data)[ii]);
         // }
-        printf("Lux 0x29: %08d\n", tsl2561_get_lux(css));
-        printf("Lux 0x39: %08d\n", tsl2561_get_lux(css1));
-        short magData[3];
-        lsm9ds1_read_mag(mag, magData);
+        printf("Lux 0x29: %08d ", lux0);
+        printf("Lux 0x39: %08d ", lux1);
         printf("Bx: %d By: %d Bz: %d\n", magData[0], magData[1], magData[2]);
+        printf("Average usec: %lf | Stdev usec: %lf\n", avg, sqrt(avg2-avg*avg)) ;
         usleep(14000);
     }
     printf("Freeing...\n");
