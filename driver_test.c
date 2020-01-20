@@ -132,17 +132,18 @@ int main()
         {
             for (int i = 0; i < 4; i++)
             {
-                printf("ADC CHN [%d]: DATA = [%04X]\n", i, adc_conv_reg_data[i]);
+                // printf("ADC CHN [%d]: DATA = [%04X]\n", i, adc_conv_reg_data[i]);
             }
         }
 
-        uint8_t data[4];
-        int css_stat = tsl2561_read_i2c_data(css, data);
-        for (int ii = 0; ii < 2; ii++)
-        {
-            printf("CSS CHN [%d]: DATA = [%04X]\n", ii, ((uint16_t *)data)[ii]);
-        }
-        usleep(250000);
+        // uint8_t data[4];
+        // int css_stat = tsl2561_read_i2c_data(css, data);
+        // for (int ii = 0; ii < 2; ii++)
+        // {
+        //     printf("CSS CHN [%d]: DATA = [%04X]\n", ii, ((uint16_t *)data)[ii]);
+        // }
+        printf("Lux: %08d\r", tsl2561_get_lux(css)) ;
+        usleep(14000);
     }
     printf("Freeing...\n") ;
     ads1115_destroy(adc);
