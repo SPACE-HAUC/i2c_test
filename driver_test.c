@@ -72,8 +72,8 @@ int main()
     adc_conf.os = 0;
     adc_conf.mux = 0;
     adc_conf.pga = 1;
-    adc_conf.mode = 1;
-    adc_conf.dr = 7;
+    adc_conf.mode = 0;
+    adc_conf.dr = 5;
     adc_conf.comp_mode = 0;
     adc_conf.comp_pol = 0;
     adc_conf.comp_lat = 0;
