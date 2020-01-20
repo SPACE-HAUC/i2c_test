@@ -2,6 +2,8 @@
 // gcc -O2 -c ads1115.c -Wall
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
 
 #include "../ads1115/ads1115.h"
 #include "../TSL2561/tsl2561.h"
@@ -123,6 +125,7 @@ int main()
         {
             printf("CSS CHN [%d]: DATA = [%04X]\n", ii, *((uint16_t *)&data[2 * ii]));
         }
+        usleep(26000) ;
     }
 
     ads1115_destroy(adc);
