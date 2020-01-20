@@ -39,7 +39,7 @@ int main()
 
     // Initialize devices
     adc_stat = ads1115_init(adc, ADS1115_S_ADDR);
-    css_stat = tsl2561_init(css, TSL2561_ADDR_FLOAT);
+    css_stat = tsl2561_init(css, TSL2561_ADDR_LOW);
 
     printf("*************************ADS1115*************************\n");
     // 1A) [READ] *original* contents from configuration register
