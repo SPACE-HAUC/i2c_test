@@ -8,11 +8,12 @@
 
 #include "../ads1115/ads1115.h"
 #include "../TSL2561/tsl2561.h"
+#include "../lsm9ds1/lsm9ds1.h"
 
-volatile done = 0 ;
+volatile done = 0;
 void handler(int signum)
 {
-    done = 1 ;
+    done = 1;
 }
 
 int main()
@@ -25,9 +26,12 @@ int main()
 
     ads1115 *adc = (ads1115 *)malloc(sizeof(ads1115));
     tsl2561 *css = (tsl2561 *)malloc(sizeof(tsl2561));
+    tsl2561 *css1 = (tsl2561 *)malloc(sizeof(tsl2561));
+    lsm9ds1 *mag = (lsm9ds1 *)malloc(sizeof(lsm9ds1));
 
     int adc_stat = 0;
     int css_stat = 0;
+    int mag_stat = 0 ;
 
     uint16_t adc_config_reg_data;
     int16_t *adc_conv_reg_data;
@@ -40,7 +44,8 @@ int main()
     // Initialize devices
     adc_stat = ads1115_init(adc, ADS1115_S_ADDR);
     css_stat = tsl2561_init(css, TSL2561_ADDR_LOW);
-
+    css_stat = tsl2561_init(css1, TSL2561_ADDR_FLOAT);
+    mag_stat = lsm9ds1_init(mag, 0x6b, 0x1e) ;
     printf("*************************ADS1115*************************\n");
     // 1A) [READ] *original* contents from configuration register
     adc_stat = ads1115_read_config(adc, &adc_config_reg_data);
@@ -116,6 +121,23 @@ int main()
     // }
 
     css_stat = tsl2561_configure(css);
+    css_stat = tsl2561_configure(css1);
+    printf("\n*************************TSL2561*************************\n");
+    printf("\n*************************LSM9DS1*************************\n");
+    MAG_DATA_RATE drate ;
+    drate.data_rate = 0b101 ;
+    drate.fast_odr = 0 ;
+    drate.operative_mode = 0b11 ;
+    drate.temp_comp = 1 ;
+    MAG_RESET rst ;
+    rst.full_scale = 0b00 ;
+    rst.reboot = 0 ;
+    rst.soft_rst = 0 ;
+    MAG_DATA_READ dread ;
+    dread.bdu = 0 ;
+    dread.fast_read = 0 ;
+    mag_stat = lsm9ds1_config_mag(mag, drate, rst, dread) ;
+    printf("\n*************************LSM9DS1*************************\n");
     char c;
     do
     {
@@ -142,11 +164,18 @@ int main()
         // {
         //     printf("CSS CHN [%d]: DATA = [%04X]\n", ii, ((uint16_t *)data)[ii]);
         // }
-        printf("Lux: %08d\n", tsl2561_get_lux(css)) ;
+        printf("Lux 0x29: %08d\n", tsl2561_get_lux(css));
+        printf("Lux 0x39: %08d\n", tsl2561_get_lux(css1));
+        short magData[3] ;
+        lsm9ds1_read_mag(mag, magData);
+        printf("Bx: %d By: %d Bz: %d\n", magData[0], magData[1], magData[2]) ;
         usleep(14000);
     }
-    printf("Freeing...\n") ;
+    printf("Freeing...\n");
     ads1115_destroy(adc);
     tsl2561_destroy(css);
+    tsl2561_destroy(css1);
+    close(mag->fd);
+    free(mag);
     return 0;
 }
