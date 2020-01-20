@@ -175,7 +175,8 @@ int main()
     ads1115_destroy(adc);
     tsl2561_destroy(css);
     tsl2561_destroy(css1);
-    close(mag->fd);
+    close(mag->accel_file);
+    close(mag->mag_file);
     free(mag);
     return 0;
 }
