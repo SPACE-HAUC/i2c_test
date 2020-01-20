@@ -105,6 +105,12 @@ int main()
     }
 
     css_stat = tsl2561_configure(css);
+    char c;
+    do
+    {
+        printf("Press enter key to continue...");
+        scanf("%c", &c);
+    } while (c != '\n');
 
     while (1)
     {
@@ -125,7 +131,7 @@ int main()
         {
             printf("CSS CHN [%d]: DATA = [%04X]\n", ii, *((uint16_t *)&data[2 * ii]));
         }
-        usleep(26000) ;
+        usleep(250000);
     }
 
     ads1115_destroy(adc);
