@@ -4,13 +4,24 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <signal.h>
 
 #include "../ads1115/ads1115.h"
 #include "../TSL2561/tsl2561.h"
 
+volatile done = 0 ;
+void handler(int signum)
+{
+    done = 1 ;
+}
+
 int main()
 {
     char command;
+
+    struct sigaction action;
+    action.sa_handler = handler;
+    sigaction(SIGINT, &action, NULL);
 
     ads1115 *adc = (ads1115 *)malloc(sizeof(ads1115));
     tsl2561 *css = (tsl2561 *)malloc(sizeof(tsl2561));
@@ -112,7 +123,7 @@ int main()
         scanf("%c", &c);
     } while (c != '\n');
 
-    while (1)
+    while (!done)
     {
         adc_stat = ads1115_read_data(adc, adc_conv_reg_data);
 
