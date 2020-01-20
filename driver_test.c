@@ -1,6 +1,7 @@
 
 // gcc -O2 -c ads1115.c -Wall
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
@@ -28,6 +29,8 @@ int main()
     tsl2561 *css = (tsl2561 *)malloc(sizeof(tsl2561));
     tsl2561 *css1 = (tsl2561 *)malloc(sizeof(tsl2561));
     lsm9ds1 *mag = (lsm9ds1 *)malloc(sizeof(lsm9ds1));
+
+    snprintf(mag->fname, 40, "/dev/i2c-1") ;
 
     int adc_stat = 0;
     int css_stat = 0;
