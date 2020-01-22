@@ -47,13 +47,14 @@ int main()
     ads1115_config adc_conf;
 
     uint8_t css_config_reg_data;
-
+    printf("...?\n");
     adc_conv_reg_data = (int16_t *)(malloc(4 * sizeof(int16_t)));
     printf("%d", __LINE__);
     // Initialize devices
     adc_stat = ads1115_init(adc, ADS1115_S_ADDR);
     printf("%d", __LINE__);
-    mux_stat = tca9458a_init(mux, 0x70, MUX_I2C_FIle);
+    snprintf(mux->fname, 40, "/dev/i2c-1");
+    mux_stat = tca9458a_init(mux, 0x70);
     printf("[MAIN] Created MUX");
     for (int i = 0; i < 3; i++)
     {
