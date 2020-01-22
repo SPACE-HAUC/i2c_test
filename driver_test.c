@@ -33,7 +33,7 @@ int main()
     for (int i = 0; i < 9; i++)
         css[i] = (tsl2561 *)malloc(sizeof(tsl2561));
     lsm9ds1 *mag = (lsm9ds1 *)malloc(sizeof(lsm9ds1));
-    tca9458a *mux; // the allocation is handled by the init script itself
+    tca9458a *mux = (tca9458a *)malloc(sizeof(tca9458a)); // the allocation is handled by the init script itself
     // copy MAG I2C file name to the device descriptor
     snprintf(mag->fname, 40, "/dev/i2c-1");
     printf("[MAIN] allocated memory.\n");
@@ -43,18 +43,13 @@ int main()
     int mux_stat = 0;
 
     uint16_t adc_config_reg_data;
-    int16_t *adc_conv_reg_data;
+    int16_t *adc_conv_reg_data = (int16_t *)malloc(4 * sizeof(uint16_t));
     ads1115_config adc_conf;
 
     uint8_t css_config_reg_data;
-    printf("...?\n");
-    adc_conv_reg_data = (int16_t *)(malloc(4 * sizeof(int16_t)));
-    printf("%d", __LINE__);
     // Initialize devices
     adc_stat = ads1115_init(adc, ADS1115_S_ADDR);
-    printf("%d", __LINE__);
-    snprintf(mux->fname, 40, "/dev/i2c-1");
-    mux_stat = tca9458a_init(mux, 0x70);
+    mux_stat = tca9458a_init(mux, 0x70, MUX_I2C_FILE);
     printf("[MAIN] Created MUX");
     for (int i = 0; i < 3; i++)
     {
@@ -195,7 +190,7 @@ int main()
             tca9458a_set(mux, i);
             for (int j = 0; j < 3; j++)
             {
-                tsl2561_configure(css[3 * i + j]);
+                lux[3*i+j] = tsl2561_get_lux(css[3 * i + j]);
             }
         }
         lsm9ds1_read_mag(mag, magData);
