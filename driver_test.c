@@ -12,8 +12,9 @@
 #include "../ads1115/ads1115.h"
 #include "../TSL2561/tsl2561.h"
 #include "../lsm9ds1/lsm9ds1.h"
+#include "../tca9458a/tca9458a.h"
 
-volatile done = 0;
+volatile sig_atomic_t done = 0;
 void handler(int signum)
 {
     done = 1;
@@ -22,21 +23,24 @@ void handler(int signum)
 int main()
 {
     char command;
-
+    // Set up interrupt handler for Ctrl^C
     struct sigaction action;
     action.sa_handler = handler;
     sigaction(SIGINT, &action, NULL);
-
+    // allocate memory for devices
     ads1115 *adc = (ads1115 *)malloc(sizeof(ads1115));
-    tsl2561 *css = (tsl2561 *)malloc(sizeof(tsl2561));
-    tsl2561 *css1 = (tsl2561 *)malloc(sizeof(tsl2561));
+    tsl2561 **css = (tsl2561 **)malloc(9 * sizeof(tsl2561 *));
+    for (int i = 0; i < 9; i++)
+        css[i] = (tsl2561 *)malloc(sizeof(tsl2561));
     lsm9ds1 *mag = (lsm9ds1 *)malloc(sizeof(lsm9ds1));
-
+    tca9458a *mux; // the allocation is handled by the init script itself
+    // copy MAG I2C file name to the device descriptor
     snprintf(mag->fname, 40, "/dev/i2c-1");
 
     int adc_stat = 0;
     int css_stat = 0;
     int mag_stat = 0;
+    int mux_stat = 0;
 
     uint16_t adc_config_reg_data;
     int16_t *adc_conv_reg_data;
@@ -48,8 +52,18 @@ int main()
 
     // Initialize devices
     adc_stat = ads1115_init(adc, ADS1115_S_ADDR);
-    css_stat = tsl2561_init(css, TSL2561_ADDR_LOW);
-    css_stat = tsl2561_init(css1, TSL2561_ADDR_FLOAT);
+    mux_stat = tca9458a_init(mux, 0x70, MUX_I2C_FIle);
+    for (int i = 0; i < 3; i++)
+    {
+        uint8_t css_addr = TSL2561_ADDR_LOW;
+        tca9458a_set(mux, i);
+        for (int j = 0; j < 3; j++)
+        {
+            tsl2561_init(css[3 * i + j], css_addr);
+            css_addr += 0x10;
+        }
+    }
+    tca9458a_set(mux, 8); // disables mux
     mag_stat = lsm9ds1_init(mag, 0x6b, 0x1e);
     printf("*************************ADS1115*************************\n");
     // 1A) [READ] *original* contents from configuration register
@@ -125,8 +139,14 @@ int main()
     //     perror("[ERROR] Could not read from timing register.");
     // }
 
-    css_stat = tsl2561_configure(css);
-    css_stat = tsl2561_configure(css1);
+    for (int i = 0; i < 3; i++)
+    {
+        tca9458a_set(mux, i);
+        for (int j = 0; j < 3; j++)
+        {
+            tsl2561_configure(css[3 * i + j]);
+        }
+    }
     printf("\n*************************TSL2561*************************\n");
     // printf("\n*************************LSM9DS1*************************\n");
     // MAG_DATA_RATE drate ;
@@ -150,37 +170,44 @@ int main()
         scanf("%c", &c);
     } while (c != '\n');
 
-    int retval ;
+    int retval;
     retval = PAPI_library_init(PAPI_VER_CURRENT);
-    if ( retval != PAPI_VER_CURRENT )
+    if (retval != PAPI_VER_CURRENT)
     {
         printf("PAPI error");
         exit(0);
     }
-    double avg = 0 , avg2 = 0 ;
-    long long count = 1 ;
+    double avg = 0, avg2 = 0;
+    long long count = 1;
 
     while (!done)
-    {   
+    {
         short magData[3];
 
-        long long s = PAPI_get_real_usec() ;
+        long long s = PAPI_get_real_usec();
         adc_stat = ads1115_read_cont(adc, adc_conv_reg_data);
-        int lux0 = tsl2561_get_lux(css);
-        int lux1 = tsl2561_get_lux(css1);
+        int lux[9];
+        for (int i = 0; i < 3; i++)
+        {
+            tca9458a_set(mux, i);
+            for (int j = 0; j < 3; j++)
+            {
+                tsl2561_configure(css[3 * i + j]);
+            }
+        }
         lsm9ds1_read_mag(mag, magData);
-        long long e = PAPI_get_real_usec() ;
-        avg = count * avg + ( e - s ) ;
-        avg2 = count * avg2 + ( e - s ) * ( e - s ) ;
-        count++ ;
-        avg /= count ;
-        avg2 /= count ;
+        long long e = PAPI_get_real_usec();
+        avg = count * avg + (e - s);
+        avg2 = count * avg2 + (e - s) * (e - s);
+        count++;
+        avg /= count;
+        avg2 /= count;
         // 4B) [PRINT] data from conversion register
         // if (adc_stat)
         // {
         for (int i = 0; i < 4; i++)
         {
-             printf("A%d:%04X ", i, adc_conv_reg_data[i]);
+            printf("A%d:%04X ", i, adc_conv_reg_data[i]);
         }
         // }
 
@@ -190,16 +217,23 @@ int main()
         // {
         //     printf("CSS CHN [%d]: DATA = [%04X]\n", ii, ((uint16_t *)data)[ii]);
         // }
-        printf("0x29: %d ", lux0);
-        printf("0x39: %d ", lux1);
+        for (int i = 0; i < 9; i++)
+            printf("LUX: %d ", lux[i]);
         printf("Bx: %d By: %d Bz: %d\n", magData[0], magData[1], magData[2]);
-        printf("Average usec: %lf | Stdev usec: %lf\n", avg, sqrt(avg2-avg*avg)) ;
-        usleep(14000);
+        printf("Average usec: %lf | Stdev usec: %lf\n", avg, sqrt(avg2 - avg * avg));
+        usleep(100000); // sleep for 100 ms to allow enough time
     }
     printf("Freeing...\n");
     ads1115_destroy(adc);
-    tsl2561_destroy(css);
-    tsl2561_destroy(css1);
+    for (int i = 0; i < 3; i++)
+    {
+        tca9458a_set(mux, i);
+        for (int j = 0; j < 3; j++)
+        {
+            tsl2561_destroy(css[3 * i + j]);
+        }
+    }
     lsm9ds1_destroy(mag);
+    tca9458a_destroy(mux) ;
     return 0;
 }
