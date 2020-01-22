@@ -178,10 +178,10 @@ int main()
         // 4B) [PRINT] data from conversion register
         // if (adc_stat)
         // {
-        //     for (int i = 0; i < 4; i++)
-        //     {
-        //         printf("ADC CHN [%d]: DATA = [%04X]\n", i, adc_conv_reg_data[i]);
-        //     }
+        for (int i = 0; i < 4; i++)
+        {
+             printf("A%d:%04X ", i, adc_conv_reg_data[i]);
+        }
         // }
 
         // uint8_t data[4];
@@ -190,8 +190,8 @@ int main()
         // {
         //     printf("CSS CHN [%d]: DATA = [%04X]\n", ii, ((uint16_t *)data)[ii]);
         // }
-        printf("Lux 0x29: %08d ", lux0);
-        printf("Lux 0x39: %08d ", lux1);
+        printf("0x29: %d ", lux0);
+        printf("0x39: %d ", lux1);
         printf("Bx: %d By: %d Bz: %d\n", magData[0], magData[1], magData[2]);
         printf("Average usec: %lf | Stdev usec: %lf\n", avg, sqrt(avg2-avg*avg)) ;
         usleep(14000);
