@@ -36,7 +36,7 @@ int main()
     tca9458a *mux; // the allocation is handled by the init script itself
     // copy MAG I2C file name to the device descriptor
     snprintf(mag->fname, 40, "/dev/i2c-1");
-
+    printf("[MAIN] allocated memory.\n")
     int adc_stat = 0;
     int css_stat = 0;
     int mag_stat = 0;
