@@ -53,6 +53,7 @@ int main()
     // Initialize devices
     adc_stat = ads1115_init(adc, ADS1115_S_ADDR);
     mux_stat = tca9458a_init(mux, 0x70, MUX_I2C_FIle);
+    printf("[MAIN] Created MUX");
     for (int i = 0; i < 3; i++)
     {
         uint8_t css_addr = TSL2561_ADDR_LOW;
